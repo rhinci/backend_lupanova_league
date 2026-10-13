@@ -23,7 +23,7 @@ GET {{base}}/api/teams/1
 PATCH {{base}}/api/teams/1
 Content-Type: application/json
 
-{ "title": "Изменённая запись" }
+{ "name": "Изменённая команда" }
 
 ### Удалить
 DELETE {{base}}/api/teams/1

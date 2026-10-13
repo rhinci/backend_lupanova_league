@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.hobbyhorse.league.model.Team;
@@ -37,8 +39,34 @@ public class TeamController {
         return teamRepository.findAll();
     }
 
-    @GetMapping("/{id}")
+        @GetMapping("/{id}")
     public Team get(@PathVariable Long id) {
+        return findOrThrow(id);
+    }
+
+    @PatchMapping("/{id}")
+    public Team update(@PathVariable Long id, @RequestBody Team changes) {
+        Team team = findOrThrow(id);
+        if (changes.getName() != null) {
+            team.setName(changes.getName());
+        }
+        if (changes.getCity() != null) {
+            team.setCity(changes.getCity());
+        }
+        if (changes.getMaxPlayers() != null) {
+            team.setMaxPlayers(changes.getMaxPlayers());
+        }
+        return teamRepository.save(team);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        findOrThrow(id);
+        teamRepository.deleteById(id);
+    }
+
+    private Team findOrThrow(Long id) {
         return teamRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Команда не найдена"));
