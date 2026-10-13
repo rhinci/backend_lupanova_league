@@ -67,6 +67,18 @@ Content-Type: application/json
 
 { "name": "" }
 
+### Пустой город при изменении, должен быть 400 и field = city
+PATCH {{base}}/api/teams/1
+Content-Type: application/json
+
+{ "city": "" }
+
+### Лимит меньше 1 при изменении, должен быть 400 и field = maxPlayers
+PATCH {{base}}/api/teams/1
+Content-Type: application/json
+
+{ "maxPlayers": 0 }
+
 
 ### Создать команду в другом городе
 POST {{base}}/api/teams
