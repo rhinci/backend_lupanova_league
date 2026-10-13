@@ -8,10 +8,10 @@
 GET {{base}}/health
 
 ### Создать
-POST {{base}}/api/items
+POST {{base}}/api/teams
 Content-Type: application/json
 
-{ "title": "Первая запись" }
+{ "name": "Быстрые лошадки", "city": "Москва", "maxPlayers": 10 }
 
 ### Список
 GET {{base}}/api/items
