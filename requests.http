@@ -14,31 +14,31 @@ Content-Type: application/json
 { "name": "Быстрые лошадки", "city": "Москва", "maxPlayers": 10 }
 
 ### Список
-GET {{base}}/api/items
+GET {{base}}/api/teams
 
 ### Получить одну запись
-GET {{base}}/api/items/1
+GET {{base}}/api/teams/1
 
 ### Изменить
-PATCH {{base}}/api/items/1
+PATCH {{base}}/api/teams/1
 Content-Type: application/json
 
 { "title": "Изменённая запись" }
 
 ### Удалить
-DELETE {{base}}/api/items/1
+DELETE {{base}}/api/teams/1
 
 ### После удаления должен быть 404
-GET {{base}}/api/items/1
+GET {{base}}/api/teams/1
 
 ### Сломанный JSON, должен быть 400
-POST {{base}}/api/items
+POST {{base}}/api/teams
 Content-Type: application/json
 
 { "title":
 
 ### Пустое обязательное поле, должен быть 400
-POST {{base}}/api/items
+POST {{base}}/api/teams
 Content-Type: application/json
 
 { "title": "" }
