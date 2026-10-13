@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.hobbyhorse.league.model.Team;
 import com.hobbyhorse.league.repository.TeamRepository;
+import com.hobbyhorse.league.error.BadRequestException;
 
 import jakarta.validation.Valid;
 
@@ -36,12 +38,26 @@ public class TeamController {
         return teamRepository.save(team);
     }
 
-        @GetMapping
-    public List<Team> list() {
-        return teamRepository.findAll();
+    @GetMapping
+    public List<Team> list(
+            @RequestParam(required = false) String city,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(required = false) Integer limit) {
+        if (offset < 0) {
+            throw new BadRequestException("offset не может быть отрицательным", "offset");
+        }
+        if (limit != null && limit < 1) {
+            throw new BadRequestException("limit должен быть не меньше 1", "limit");
+        }
+        long maxCount = (limit == null) ? Long.MAX_VALUE : limit;
+        return teamRepository.findAll().stream()
+                .filter(team -> city == null || team.getCity().equalsIgnoreCase(city))
+                .skip(offset)
+                .limit(maxCount)
+                .toList();
     }
 
-        @GetMapping("/{id}")
+    @GetMapping("/{id}")
     public Team get(@PathVariable Long id) {
         return findOrThrow(id);
     }

@@ -13,7 +13,7 @@ Content-Type: application/json
 ### Список
 GET {{base}}/api/teams
 
-### Получить одну запись
+### Получить одну команду
 GET {{base}}/api/teams/1
 
 ### Изменить
@@ -28,20 +28,66 @@ DELETE {{base}}/api/teams/1
 ### После удаления должен быть 404
 GET {{base}}/api/teams/1
 
+### Несуществующая команда, должен быть 404
+GET {{base}}/api/teams/999999
+
 ### Сломанный JSON, должен быть 400
 POST {{base}}/api/teams
 Content-Type: application/json
 
-{ "title":
+{ "name":
 
-### Нет обязательного поля, должен быть 400
+### Пустое название, должен быть 400 и field = name
 POST {{base}}/api/teams
 Content-Type: application/json
 
-{ "city": "Москва" }
+{ "name": "", "city": "Москва", "maxPlayers": 10 }
 
-### Пустое имя при изменении, должен быть 400
+### Нет названия, должен быть 400 и field = name
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "city": "Москва", "maxPlayers": 10 }
+
+### Пустой город, должен быть 400 и field = city
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Быстрые лошадки", "city": "", "maxPlayers": 10 }
+
+### Лимит игроков меньше 1, должен быть 400 и field = maxPlayers
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Быстрые лошадки", "city": "Москва", "maxPlayers": -1 }
+
+### Пустое название при изменении, должен быть 400
 PATCH {{base}}/api/teams/1
 Content-Type: application/json
 
 { "name": "" }
+
+
+### Создать команду в другом городе
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Волжские рысаки", "city": "Казань", "maxPlayers": 8 }
+
+### Первая страница, по две записи
+GET {{base}}/api/teams?limit=2&offset=0
+
+### Вторая страница
+GET {{base}}/api/teams?limit=2&offset=2
+
+### Фильтр по городу
+GET {{base}}/api/teams?city=Москва
+
+### Фильтр и пагинация вместе
+GET {{base}}/api/teams?city=Москва&limit=1&offset=0
+
+### limit равен нулю, должен быть 400 и field = limit
+GET {{base}}/api/teams?limit=0
+
+### limit не число, должен быть 400 и field = limit
+GET {{base}}/api/teams?limit=abc

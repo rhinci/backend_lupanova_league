@@ -13,10 +13,12 @@
 ## Как запустить
 
 ```bash
-# команды по порядку: от git clone до работающего сервиса
+git clone https://github.com/rhinci/backend_lupanova_league.git
+cd backend_lupanova_league
+./mvnw spring-boot:run
 ```
 
-Сервис работает на `http://localhost:8000`. Запросы для демонстрации лежат в `requests.http`.
+Сервис работает на `http://localhost:8000`. Запросы для демонстрации лежат в `requests.http`. Данные хранятся в памяти и пропадают при перезапуске. Запросы для демонстрации лежат в `requests.http`.
 
 ## Эндпоинты
 
