@@ -1,6 +1,3 @@
-# Запросы для демонстрации. В VS Code нужно расширение REST Client, в JetBrains IDE всё встроено.
-# Над каждым запросом появляется ссылка «Send Request».
-# items заменить на свой ресурс, тела на поля своей сущности.
 
 @base = http://localhost:8000
 
@@ -37,8 +34,14 @@ Content-Type: application/json
 
 { "title":
 
-### Пустое обязательное поле, должен быть 400
+### Нет обязательного поля, должен быть 400
 POST {{base}}/api/teams
 Content-Type: application/json
 
-{ "title": "" }
+{ "city": "Москва" }
+
+### Пустое имя при изменении, должен быть 400
+PATCH {{base}}/api/teams/1
+Content-Type: application/json
+
+{ "name": "" }

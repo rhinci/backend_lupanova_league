@@ -1,8 +1,10 @@
 package com.hobbyhorse.league.model;
+import jakarta.validation.constraints.NotBlank;
 
 public class Team {
 
     private Long id;
+    @NotBlank
     private String name;
     private String city;
     private Integer maxPlayers;
@@ -41,5 +43,5 @@ public class Team {
     public void setMaxPlayers(Integer maxPlayers) {
         this.maxPlayers = maxPlayers;
     }
-    
+
 }

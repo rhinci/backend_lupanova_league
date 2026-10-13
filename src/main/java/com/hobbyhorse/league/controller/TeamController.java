@@ -17,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.hobbyhorse.league.model.Team;
 import com.hobbyhorse.league.repository.TeamRepository;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/teams")
 public class TeamController {
@@ -29,7 +31,7 @@ public class TeamController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Team create(@RequestBody Team team) {
+    public Team create(@Valid @RequestBody Team team) {
         team.setId(null);
         return teamRepository.save(team);
     }
@@ -47,6 +49,10 @@ public class TeamController {
     @PatchMapping("/{id}")
     public Team update(@PathVariable Long id, @RequestBody Team changes) {
         Team team = findOrThrow(id);
+        if (changes.getName() != null && changes.getName().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Название команды не может быть пустым");
+        }
         if (changes.getName() != null) {
             team.setName(changes.getName());
         }
