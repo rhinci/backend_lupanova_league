@@ -1,10 +1,16 @@
 {
   "base_url": "http://localhost:8000",
-  "resource": "items",
+  "resource": "teams",
   "id_field": "id",
   "missing_id": "999999",
   "list_key": null,
-  "create": { "title": "Первая запись" },
-  "update": { "title": "Изменённая запись" },
-  "required_field": "title"
+  "create": { "name": "Быстрые лошадки", "city": "Москва", "maxPlayers": 10 },
+  "update": { "maxPlayers": 12 },
+  "required_field": "name",
+   "errors": [
+    { "body": { "name": "" }, "field": "name" },
+    { "body": { "city": "" }, "field": "city" },
+    { "body": { "maxPlayers": -1 }, "field": "maxPlayers" }
+  ],
+  "filter": { "param": "city", "value": "Москва", "other": "Казань" }
 }

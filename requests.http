@@ -1,6 +1,3 @@
-# Запросы для демонстрации. В VS Code нужно расширение REST Client, в JetBrains IDE всё встроено.
-# Над каждым запросом появляется ссылка «Send Request».
-# items заменить на свой ресурс, тела на поля своей сущности.
 
 @base = http://localhost:8000
 
@@ -8,37 +5,101 @@
 GET {{base}}/health
 
 ### Создать
-POST {{base}}/api/items
+POST {{base}}/api/teams
 Content-Type: application/json
 
-{ "title": "Первая запись" }
+{ "name": "Быстрые лошадки", "city": "Москва", "maxPlayers": 10 }
 
 ### Список
-GET {{base}}/api/items
+GET {{base}}/api/teams
 
-### Получить одну запись
-GET {{base}}/api/items/1
+### Получить одну команду
+GET {{base}}/api/teams/1
 
 ### Изменить
-PATCH {{base}}/api/items/1
+PATCH {{base}}/api/teams/1
 Content-Type: application/json
 
-{ "title": "Изменённая запись" }
+{ "name": "Изменённая команда" }
 
 ### Удалить
-DELETE {{base}}/api/items/1
+DELETE {{base}}/api/teams/1
 
 ### После удаления должен быть 404
-GET {{base}}/api/items/1
+GET {{base}}/api/teams/1
+
+### Несуществующая команда, должен быть 404
+GET {{base}}/api/teams/999999
 
 ### Сломанный JSON, должен быть 400
-POST {{base}}/api/items
+POST {{base}}/api/teams
 Content-Type: application/json
 
-{ "title":
+{ "name":
 
-### Пустое обязательное поле, должен быть 400
-POST {{base}}/api/items
+### Пустое название, должен быть 400 и field = name
+POST {{base}}/api/teams
 Content-Type: application/json
 
-{ "title": "" }
+{ "name": "", "city": "Москва", "maxPlayers": 10 }
+
+### Нет названия, должен быть 400 и field = name
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "city": "Москва", "maxPlayers": 10 }
+
+### Пустой город, должен быть 400 и field = city
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Быстрые лошадки", "city": "", "maxPlayers": 10 }
+
+### Лимит игроков меньше 1, должен быть 400 и field = maxPlayers
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Быстрые лошадки", "city": "Москва", "maxPlayers": -1 }
+
+### Пустое название при изменении, должен быть 400
+PATCH {{base}}/api/teams/1
+Content-Type: application/json
+
+{ "name": "" }
+
+### Пустой город при изменении, должен быть 400 и field = city
+PATCH {{base}}/api/teams/1
+Content-Type: application/json
+
+{ "city": "" }
+
+### Лимит меньше 1 при изменении, должен быть 400 и field = maxPlayers
+PATCH {{base}}/api/teams/1
+Content-Type: application/json
+
+{ "maxPlayers": 0 }
+
+
+### Создать команду в другом городе
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Волжские рысаки", "city": "Казань", "maxPlayers": 8 }
+
+### Первая страница, по две записи
+GET {{base}}/api/teams?limit=2&offset=0
+
+### Вторая страница
+GET {{base}}/api/teams?limit=2&offset=2
+
+### Фильтр по городу
+GET {{base}}/api/teams?city=Москва
+
+### Фильтр и пагинация вместе
+GET {{base}}/api/teams?city=Москва&limit=1&offset=0
+
+### limit равен нулю, должен быть 400 и field = limit
+GET {{base}}/api/teams?limit=0
+
+### limit не число, должен быть 400 и field = limit
+GET {{base}}/api/teams?limit=abc
