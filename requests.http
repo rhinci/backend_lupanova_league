@@ -103,3 +103,39 @@ GET {{base}}/api/teams?limit=0
 
 ### limit не число, должен быть 400 и field = limit
 GET {{base}}/api/teams?limit=abc
+
+
+
+### Игроки
+
+@teamId = 2
+
+### Добавить игрока в команду
+POST {{base}}/api/teams/{{teamId}}/players
+Content-Type: application/json
+
+{ "fullName": "Анна Петрова", "number": 7, "birthDate": "2005-03-14", "horseName": "Ветерок" }
+
+### Список игроков команды
+GET {{base}}/api/teams/{{teamId}}/players
+
+### Команды нет, должен быть 404
+GET {{base}}/api/teams/999999/players
+
+### Добавить игрока в несуществующую команду, должен быть 404
+POST {{base}}/api/teams/999999/players
+Content-Type: application/json
+
+{ "fullName": "Анна Петрова", "number": 7, "birthDate": "2005-03-14" }
+
+### Пустое ФИО, должен быть 400 и field = fullName
+POST {{base}}/api/teams/{{teamId}}/players
+Content-Type: application/json
+
+{ "fullName": "", "number": 7, "birthDate": "2005-03-14" }
+
+### Номер меньше 1, должен быть 400 и field = number
+POST {{base}}/api/teams/{{teamId}}/players
+Content-Type: application/json
+
+{ "fullName": "Анна Петрова", "number": 0, "birthDate": "2005-03-14" }
