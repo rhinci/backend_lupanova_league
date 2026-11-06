@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.hobbyhorse.league.model.Player;
 import com.hobbyhorse.league.repository.PlayerRepository;
 import com.hobbyhorse.league.repository.TeamRepository;
+import com.hobbyhorse.league.service.PlayerService;
 
 import jakarta.validation.Valid;
 
@@ -23,20 +24,21 @@ import jakarta.validation.Valid;
 public class PlayerController {
 
     private final TeamRepository teamRepository;
+    private final PlayerService playerService;
     private final PlayerRepository playerRepository;
 
-    public PlayerController(TeamRepository teamRepository, PlayerRepository playerRepository) {
+    public PlayerController(TeamRepository teamRepository,
+                            PlayerService playerService,
+                            PlayerRepository playerRepository) {
         this.teamRepository = teamRepository;
+        this.playerService = playerService;
         this.playerRepository = playerRepository;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Player create(@PathVariable Long teamId, @Valid @RequestBody Player player) {
-        checkTeamExists(teamId);
-        player.setId(null);
-        player.setTeamId(teamId);
-        return playerRepository.save(player);
+        return playerService.addPlayer(teamId, player);
     }
 
     @GetMapping

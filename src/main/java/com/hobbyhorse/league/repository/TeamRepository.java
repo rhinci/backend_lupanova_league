@@ -9,6 +9,9 @@ import org.springframework.stereotype.Repository;
 
 import com.hobbyhorse.league.model.Team;
 
+import java.math.BigDecimal;
+import com.hobbyhorse.league.model.TeamStats;
+
 @Repository
 public class TeamRepository {
 
@@ -48,6 +51,16 @@ public class TeamRepository {
                 TEAM_MAPPER);
     }
 
+    public List<Team> searchByName(String query) {
+        String escaped = query
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        return jdbc.query(
+                "SELECT id, name, city, max_players FROM teams WHERE name ILIKE ? ORDER BY id",
+                TEAM_MAPPER, "%" + escaped + "%");
+    }
+
     public Optional<Team> findById(Long id) {
         return jdbc.query(
                 "SELECT id, name, city, max_players FROM teams WHERE id = ?",
@@ -56,7 +69,34 @@ public class TeamRepository {
                 .findFirst();
     }
 
+    public Optional<Team> findByIdForUpdate(Long id) {
+        return jdbc.query(
+                "SELECT id, name, city, max_players FROM teams WHERE id = ? FOR UPDATE",
+                TEAM_MAPPER, id)
+                .stream()
+                .findFirst();
+    }
+
     public boolean deleteById(Long id) {
         return jdbc.update("DELETE FROM teams WHERE id = ?", id) > 0;
+    }
+
+    public List<TeamStats> stats() {
+        return jdbc.query(
+                "SELECT t.id, t.name, t.city, "
+                        + "count(p.id) AS players_count, "
+                        + "round(avg(extract(year FROM age(p.birth_date))), 1) AS average_age "
+                        + "FROM teams t LEFT JOIN players p ON p.team_id = t.id "
+                        + "GROUP BY t.id, t.name, t.city "
+                        + "ORDER BY t.id",
+                (rs, rowNum) -> {
+                    BigDecimal avg = rs.getBigDecimal("average_age");
+                    return new TeamStats(
+                            rs.getLong("id"),
+                            rs.getString("name"),
+                            rs.getString("city"),
+                            rs.getInt("players_count"),
+                            avg == null ? null : avg.doubleValue());
+                });
     }
 }

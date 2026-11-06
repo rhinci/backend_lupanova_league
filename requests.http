@@ -146,3 +146,63 @@ POST {{base}}/api/teams/{{teamId}}/players
 Content-Type: application/json
 
 { "fullName": "Анна Петрова", "number": 0, "birthDate": "2005-03-14" }
+
+
+
+### Поиск по названию (без учёта регистра)
+GET {{base}}/api/teams?q=быстрые
+
+### Тот же поиск в верхнем регистре, результат должен совпасть
+GET {{base}}/api/teams?q=БЫСТРЫЕ
+
+### Поиск вместе с фильтром по городу и пагинацией
+GET {{base}}/api/teams?q=команда&city=Москва&limit=3
+
+### Символ % ищется как обычный символ, должен вернуться пустой список
+GET {{base}}/api/teams?q=%25
+
+### Попытка инъекции в поиске, должен вернуться пустой список
+GET {{base}}/api/teams?q=' OR 1=1 --
+
+
+
+### Повтор номера в той же команде, должен быть 409 и field = number
+# Сначала выполнить «Добавить игрока в команду» (номер 7), затем этот запрос
+POST {{base}}/api/teams/{{teamId}}/players
+Content-Type: application/json
+
+{ "fullName": "Другой Игрок", "number": 7, "birthDate": "2004-01-01" }
+
+
+
+### Создать команду с лимитом 2 игрока (запомни её id)
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Маленькая команда", "city": "Сочи", "maxPlayers": 2 }
+
+### Подставить id из прошлого ответа
+@smallTeamId = 1
+
+### Игрок 1
+POST {{base}}/api/teams/{{smallTeamId}}/players
+Content-Type: application/json
+
+{ "fullName": "Первый", "number": 1, "birthDate": "2005-01-01" }
+
+### Игрок 2
+POST {{base}}/api/teams/{{smallTeamId}}/players
+Content-Type: application/json
+
+{ "fullName": "Второй", "number": 2, "birthDate": "2005-01-02" }
+
+### Игрок 3: лимит исчерпан, должен быть 409
+POST {{base}}/api/teams/{{smallTeamId}}/players
+Content-Type: application/json
+
+{ "fullName": "Третий", "number": 3, "birthDate": "2005-01-03" }
+
+
+
+### Статистика: средний возраст игроков по командам
+GET {{base}}/api/teams/stats

@@ -46,4 +46,11 @@ public class PlayerRepository {
                         + "FROM players WHERE team_id = ? ORDER BY id",
                 PLAYER_MAPPER, teamId);
     }
+
+    public int countByTeamId(Long teamId) {
+        Integer count = jdbc.queryForObject(
+                "SELECT count(*) FROM players WHERE team_id = ?",
+                Integer.class, teamId);
+        return count == null ? 0 : count;
+    }
 }

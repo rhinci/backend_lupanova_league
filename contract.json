@@ -23,5 +23,24 @@
       "horseName": "Ветерок"
     },
     "parent_field": "teamId"
-  }
+  },
+  "search": { "param": "q", "field": "name" },
+    "rule": {
+    "description": "В команде не больше maxPlayers игроков",
+    "parent": { "maxPlayers": 1 },
+    "setup": [
+      {
+        "method": "POST",
+        "path": "/api/teams/{id}/players",
+        "body": { "fullName": "Первый Игрок", "number": 1, "birthDate": "2005-03-14" }
+      }
+    ],
+    "violate": {
+      "method": "POST",
+      "path": "/api/teams/{id}/players",
+      "body": { "fullName": "Второй Игрок", "number": 2, "birthDate": "2005-03-15" }
+    },
+    "expect_status": 409
+  },
+  "stats_path": "/api/teams/stats"
 }
