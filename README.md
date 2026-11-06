@@ -12,13 +12,34 @@
 
 ## Как запустить
 
+Нужны Java 25 и Docker.
+
 ```bash
 git clone https://github.com/rhinci/backend_lupanova_league.git
 cd backend_lupanova_league
+```
+
+1. Запустить PostgreSQL в Docker:
+
+```bash
+docker run --name league-db -e POSTGRES_USER=league_user -e POSTGRES_PASSWORD=league_pass -e POSTGRES_DB=league -p 5433:5432 -v league-pgdata:/var/lib/postgresql/data -d postgres:17
+```
+
+2. Создать файл `.env` из шаблона и при необходимости поменять значения:
+
+```bash
+cp .env.example .env
+```
+
+В PowerShell вместо `cp` можно использовать `Copy-Item .env.example .env`. Для базы из команды выше нужно заменить в `.env` значение `DB_PASSWORD=change_me` на `DB_PASSWORD=league_pass`.
+
+3. Запустить сервис:
+
+```bash
 ./mvnw spring-boot:run
 ```
 
-Сервис работает на `http://localhost:8000`. Запросы для демонстрации лежат в `requests.http`. Данные хранятся в памяти и пропадают при перезапуске. Запросы для демонстрации лежат в `requests.http`.
+Сервис работает на `http://localhost:8000`. Таблицы создаются автоматически при старте из файла `src/main/resources/schema.sql`. Данные хранятся в PostgreSQL и переживают перезапуск сервиса. Запросы для демонстрации лежат в `requests.http`.
 
 Документация API (Swagger UI): `http://localhost:8000/docs`.
 

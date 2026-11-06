@@ -105,6 +105,13 @@ GET {{base}}/api/teams?limit=0
 GET {{base}}/api/teams?limit=abc
 
 
+### Строка с SQL-инъекцией, должна сохраниться как текст
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "'); DROP TABLE teams;--", "city": "Москва", "maxPlayers": 10 }
+
+
 
 ### Игроки
 
