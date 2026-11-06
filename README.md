@@ -39,7 +39,13 @@ cp .env.example .env
 ./mvnw spring-boot:run
 ```
 
-Сервис работает на `http://localhost:8000`. Таблицы создаются автоматически при старте из файла `src/main/resources/schema.sql`. Данные хранятся в PostgreSQL и переживают перезапуск сервиса. Запросы для демонстрации лежат в `requests.http`.
+Сервис работает на `http://localhost:8000`. Схема базы создаётся автоматически при старте миграциями Flyway из папки `src/main/resources/db/migration`. Данные хранятся в PostgreSQL и переживают перезапуск сервиса. Запросы для демонстрации лежат в `requests.http`.
+
+Тестовые данные (500 команд и 5000 игроков, сиды) заливаются одной командой, запуском сервиса с профилем `seed`:
+
+```bash
+./mvnw spring-boot:run "-Dspring-boot.run.profiles=seed"
+```
 
 Документация API (Swagger UI): `http://localhost:8000/docs`.
 
@@ -65,6 +71,37 @@ cp .env.example .env
 | `city` | Только команды из этого города (регистр не важен) |
 | `limit` | Сколько записей вернуть, не меньше 1; по умолчанию без ограничения |
 | `offset` | Сколько записей пропустить с начала, не меньше 0; по умолчанию 0 |
+
+## Индекс и EXPLAIN
+
+Самый частый запрос сервиса: список игроков команды (`GET /api/teams/{id}/players`). Он ищет по `team_id`, а PostgreSQL сам не создаёт индекс на внешний ключ. Индекс добавлен миграцией `V2__index_players_team_id.sql`:
+
+```sql
+CREATE INDEX idx_players_team_id ON players (team_id);
+```
+
+Проверка на базе с тестовыми данными (500 команд, 5000 игроков):
+
+```sql
+EXPLAIN ANALYZE SELECT * FROM players WHERE team_id = 250;
+```
+
+До индекса база читает всю таблицу:
+
+```
+Seq Scan on players  (cost=0.00..118.50 rows=10 width=55) (actual time=0.290..0.498 rows=10 loops=1)
+  Filter: (team_id = 250)
+  Rows Removed by Filter: 4990
+Execution Time: 0.630 ms
+```
+
+После индекса база использует его:
+
+```
+Index Scan using idx_players_team_id on players  (cost=0.28..8.46 rows=10 width=55) (actual time=0.052..0.055 rows=10 loops=1)
+  Index Cond: (team_id = 250)
+Execution Time: 0.125 ms
+```
 
 ## ER-диаграмма
 
