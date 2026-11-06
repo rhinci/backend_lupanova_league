@@ -7,10 +7,21 @@
   "create": { "name": "Быстрые лошадки", "city": "Москва", "maxPlayers": 10 },
   "update": { "maxPlayers": 12 },
   "required_field": "name",
-   "errors": [
+  "errors": [
     { "body": { "name": "" }, "field": "name" },
     { "body": { "city": "" }, "field": "city" },
     { "body": { "maxPlayers": -1 }, "field": "maxPlayers" }
   ],
-  "filter": { "param": "city", "value": "Москва", "other": "Казань" }
+  "filter": { "param": "city", "value": "Москва", "other": "Казань" },
+  "text_field": "name",
+  "child": {
+    "resource": "players",
+    "create": {
+      "fullName": "Иванов Иван",
+      "number": 7,
+      "birthDate": "2005-03-14",
+      "horseName": "Ветерок"
+    },
+    "parent_field": "teamId"
+  }
 }
