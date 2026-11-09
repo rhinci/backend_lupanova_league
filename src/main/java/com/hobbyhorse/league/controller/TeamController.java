@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.hobbyhorse.league.model.Team;
+import com.hobbyhorse.league.model.TeamStats;
 import com.hobbyhorse.league.repository.TeamRepository;
 import com.hobbyhorse.league.error.BadRequestException;
 
@@ -46,6 +47,7 @@ public class TeamController {
     @GetMapping
     public List<Team> list(
             @RequestParam(required = false) String city,
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(required = false) Integer limit) {
         if (offset < 0) {
@@ -55,11 +57,19 @@ public class TeamController {
             throw new BadRequestException("limit должен быть не меньше 1", "limit");
         }
         long maxCount = (limit == null) ? Long.MAX_VALUE : limit;
-        return teamRepository.findAll().stream()
+        List<Team> source = (q == null || q.isBlank())
+                ? teamRepository.findAll()
+                : teamRepository.searchByName(q);
+        return source.stream()
                 .filter(team -> city == null || team.getCity().equalsIgnoreCase(city))
                 .skip(offset)
                 .limit(maxCount)
                 .toList();
+    }
+
+    @GetMapping("/stats")
+    public List<TeamStats> stats() {
+        return teamRepository.stats();
     }
 
     @GetMapping("/{id}")

@@ -12,13 +12,40 @@
 
 ## Как запустить
 
+Нужны Java 25 и Docker.
+
 ```bash
 git clone https://github.com/rhinci/backend_lupanova_league.git
 cd backend_lupanova_league
+```
+
+1. Запустить PostgreSQL в Docker:
+
+```bash
+docker run --name league-db -e POSTGRES_USER=league_user -e POSTGRES_PASSWORD=league_pass -e POSTGRES_DB=league -p 5433:5432 -v league-pgdata:/var/lib/postgresql/data -d postgres:17
+```
+
+2. Создать файл `.env` из шаблона и при необходимости поменять значения:
+
+```bash
+cp .env.example .env
+```
+
+В PowerShell вместо `cp` можно использовать `Copy-Item .env.example .env`. Для базы из команды выше нужно заменить в `.env` значение `DB_PASSWORD=change_me` на `DB_PASSWORD=league_pass`.
+
+3. Запустить сервис:
+
+```bash
 ./mvnw spring-boot:run
 ```
 
-Сервис работает на `http://localhost:8000`. Запросы для демонстрации лежат в `requests.http`. Данные хранятся в памяти и пропадают при перезапуске. Запросы для демонстрации лежат в `requests.http`.
+Сервис работает на `http://localhost:8000`. Схема базы создаётся автоматически при старте миграциями Flyway из папки `src/main/resources/db/migration`. Данные хранятся в PostgreSQL и переживают перезапуск сервиса. Запросы для демонстрации лежат в `requests.http`.
+
+Тестовые данные (500 команд и 5000 игроков, сиды) заливаются одной командой, запуском сервиса с профилем `seed`:
+
+```bash
+./mvnw spring-boot:run "-Dspring-boot.run.profiles=seed"
+```
 
 Документация API (Swagger UI): `http://localhost:8000/docs`.
 
@@ -34,6 +61,7 @@ cd backend_lupanova_league
 | DELETE | `/api/teams/{id}` | Удалить | 204; 404 |
 | POST | `/api/teams/{id}/players` |	Добавить игрока в команду	| 201; 400; 404; 409 |
 | GET |	`/api/teams/{id}/players` |	Список игроков команды | 200; 404 |
+| GET | `/api/teams/stats` | Статистика: число игроков и средний возраст по командам | 200 |
 
 ## Фильтр и пагинация
 
@@ -44,6 +72,39 @@ cd backend_lupanova_league
 | `city` | Только команды из этого города (регистр не важен) |
 | `limit` | Сколько записей вернуть, не меньше 1; по умолчанию без ограничения |
 | `offset` | Сколько записей пропустить с начала, не меньше 0; по умолчанию 0 |
+| `q` | Поиск по названию команды, регистр не важен, ищет база |
+
+
+## Индекс и EXPLAIN
+
+Самый частый запрос сервиса: список игроков команды (`GET /api/teams/{id}/players`). Он ищет по `team_id`, а PostgreSQL сам не создаёт индекс на внешний ключ. Индекс добавлен миграцией `V2__index_players_team_id.sql`:
+
+```sql
+CREATE INDEX idx_players_team_id ON players (team_id);
+```
+
+Проверка на базе с тестовыми данными (500 команд, 5000 игроков):
+
+```sql
+EXPLAIN ANALYZE SELECT * FROM players WHERE team_id = 250;
+```
+
+До индекса база читает всю таблицу:
+
+```
+Seq Scan on players  (cost=0.00..118.50 rows=10 width=55) (actual time=0.290..0.498 rows=10 loops=1)
+  Filter: (team_id = 250)
+  Rows Removed by Filter: 4990
+Execution Time: 0.630 ms
+```
+
+После индекса база использует его:
+
+```
+Index Scan using idx_players_team_id on players  (cost=0.28..8.46 rows=10 width=55) (actual time=0.052..0.055 rows=10 loops=1)
+  Index Cond: (team_id = 250)
+Execution Time: 0.125 ms
+```
 
 ## ER-диаграмма
 
