@@ -115,7 +115,7 @@ Content-Type: application/json
 
 ### Игроки
 
-@teamId = 2
+@teamId = 18
 
 ### Добавить игрока в команду
 POST {{base}}/api/teams/{{teamId}}/players
@@ -159,7 +159,7 @@ GET {{base}}/api/teams?q=БЫСТРЫЕ
 GET {{base}}/api/teams?q=команда&city=Москва&limit=3
 
 ### Символ % ищется как обычный символ, должен вернуться пустой список
-GET {{base}}/api/teams?q=%25
+GET {{base}}/api/teams?q=%18
 
 ### Попытка инъекции в поиске, должен вернуться пустой список
 GET {{base}}/api/teams?q=' OR 1=1 --
@@ -182,7 +182,7 @@ Content-Type: application/json
 { "name": "Маленькая команда", "city": "Сочи", "maxPlayers": 2 }
 
 ### Подставить id из прошлого ответа
-@smallTeamId = 1
+@smallTeamId = 18
 
 ### Игрок 1
 POST {{base}}/api/teams/{{smallTeamId}}/players
@@ -206,3 +206,31 @@ Content-Type: application/json
 
 ### Статистика: средний возраст игроков по командам
 GET {{base}}/api/teams/stats
+
+
+
+
+
+### Лаба 3: регистрация
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "anna", "password": "qwerty123" }
+
+### Повтор того же логина, должен быть 409
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "anna", "password": "другой-пароль" }
+
+### Слишком короткий пароль, должен быть 400 и field = password
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "boris", "password": "123" }
+
+### Попытка выдать себя за админа: поле role игнорируется
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "hacker", "password": "qwerty123", "role": "admin" }
