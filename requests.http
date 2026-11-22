@@ -234,3 +234,33 @@ POST {{base}}/auth/register
 Content-Type: application/json
 
 { "username": "hacker", "password": "qwerty123", "role": "admin" }
+
+
+
+
+### Basic: верный пароль, должен быть 201 (команда создаётся)
+POST {{base}}/api/teams
+Authorization: Basic anna qwerty123
+Content-Type: application/json
+
+{ "name": "Команда Анны", "city": "Москва", "maxPlayers": 10 }
+
+### Basic: неверный пароль, должен быть 401
+POST {{base}}/api/teams
+Authorization: Basic anna wrongpass
+Content-Type: application/json
+
+{ "name": "Команда Анны", "city": "Москва", "maxPlayers": 10 }
+
+### Basic: логина нет, должен быть 401 с тем же текстом
+POST {{base}}/api/teams
+Authorization: Basic nobody qwerty123
+Content-Type: application/json
+
+{ "name": "Команда Анны", "city": "Москва", "maxPlayers": 10 }
+
+### Без заголовка пока 201
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Анонимная команда", "city": "Москва", "maxPlayers": 10 }
