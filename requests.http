@@ -298,3 +298,17 @@ Authorization: Basic anna qwerty123
 Content-Type: application/json
 
 { "name": "С входом", "city": "Москва", "maxPlayers": 10 }
+
+
+
+
+### Кто я: с входом, должен быть 200 и без пароля и хэша
+GET {{base}}/auth/me
+Authorization: Basic anna qwerty123
+
+### Кто я: без входа, должен быть 401
+GET {{base}}/auth/me
+
+### Кто я: неверный пароль, должен быть 401
+GET {{base}}/auth/me
+Authorization: Basic anna wrongpass

@@ -13,6 +13,15 @@ import com.hobbyhorse.league.service.AuthService;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.hobbyhorse.league.model.User;
+import com.hobbyhorse.league.security.AuthInterceptor;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -27,5 +36,14 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
         return UserResponse.from(authService.register(request.username(), request.password()));
+    }
+    
+    @GetMapping("/me")
+    public UserResponse me(HttpServletRequest request) {
+        User user = (User) request.getAttribute(AuthInterceptor.CURRENT_USER);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Требуется вход");
+        }
+        return UserResponse.from(user);
     }
 }
