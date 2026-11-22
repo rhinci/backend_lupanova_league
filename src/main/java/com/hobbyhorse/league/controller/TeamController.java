@@ -19,11 +19,14 @@ import com.hobbyhorse.league.model.Team;
 import com.hobbyhorse.league.model.TeamStats;
 import com.hobbyhorse.league.repository.TeamRepository;
 import com.hobbyhorse.league.error.BadRequestException;
+import com.hobbyhorse.league.model.User;
+import com.hobbyhorse.league.security.AuthInterceptor;
 
 import jakarta.validation.Valid;
 import java.util.Set;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/teams")
@@ -39,8 +42,10 @@ public class TeamController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Team create(@Valid @RequestBody Team team) {
+    public Team create(@Valid @RequestBody Team team, HttpServletRequest request) {
+        User user = (User) request.getAttribute(AuthInterceptor.CURRENT_USER);
         team.setId(null);
+        team.setOwnerId(user.getId());
         return teamRepository.save(team);
     }
 
@@ -83,6 +88,7 @@ public class TeamController {
 
         Team updated = new Team();
         updated.setId(current.getId());
+        updated.setOwnerId(current.getOwnerId());
         updated.setName(changes.getName() != null ? changes.getName() : current.getName());
         updated.setCity(changes.getCity() != null ? changes.getCity() : current.getCity());
         updated.setMaxPlayers(changes.getMaxPlayers() != null

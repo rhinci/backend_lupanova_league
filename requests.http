@@ -312,3 +312,20 @@ GET {{base}}/auth/me
 ### Кто я: неверный пароль, должен быть 401
 GET {{base}}/auth/me
 Authorization: Basic anna wrongpass
+
+
+
+
+### Создать команду, владелец ставится сервером (ownerId = 1)
+POST {{base}}/api/teams
+Authorization: Basic anna qwerty123
+Content-Type: application/json
+
+{ "name": "Команда с владельцем", "city": "Москва", "maxPlayers": 10 }
+
+### Попытка подставить чужого владельца: всё равно ownerId = 3 (boris)
+POST {{base}}/api/teams
+Authorization: Basic boris qwerty123
+Content-Type: application/json
+
+{ "name": "Подделка владельца", "city": "Москва", "maxPlayers": 10, "ownerId": 1 }

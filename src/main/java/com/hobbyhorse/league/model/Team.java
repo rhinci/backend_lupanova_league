@@ -19,6 +19,7 @@ public class Team {
     @NotNull(message = "Максимум игроков обязателен")
     @Min(value = 1, message = "Максимум игроков не меньше 1")
     private Integer maxPlayers;
+    private Long ownerId;
 
     public Team() {
     }
@@ -55,4 +56,11 @@ public class Team {
         this.maxPlayers = maxPlayers;
     }
 
+    public Long getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(Long ownerId) {
+        this.ownerId = ownerId;
+    }
 }

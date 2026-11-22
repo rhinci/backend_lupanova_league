@@ -1,0 +1,2 @@
+ALTER TABLE teams
+    ADD COLUMN owner_id BIGINT REFERENCES users (id) ON DELETE SET NULL;

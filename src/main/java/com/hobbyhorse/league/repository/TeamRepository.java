@@ -1,5 +1,6 @@
 package com.hobbyhorse.league.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,12 +9,12 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import com.hobbyhorse.league.model.Team;
-
-import java.math.BigDecimal;
 import com.hobbyhorse.league.model.TeamStats;
 
 @Repository
 public class TeamRepository {
+
+    private static final String COLUMNS = "id, name, city, max_players, owner_id";
 
     private static final RowMapper<Team> TEAM_MAPPER = (rs, rowNum) -> {
         Team team = new Team();
@@ -21,6 +22,7 @@ public class TeamRepository {
         team.setName(rs.getString("name"));
         team.setCity(rs.getString("city"));
         team.setMaxPlayers(rs.getInt("max_players"));
+        team.setOwnerId(rs.getObject("owner_id", Long.class));
         return team;
     };
 
@@ -33,9 +35,10 @@ public class TeamRepository {
     public Team save(Team team) {
         if (team.getId() == null) {
             Long id = jdbc.queryForObject(
-                    "INSERT INTO teams (name, city, max_players) VALUES (?, ?, ?) RETURNING id",
+                    "INSERT INTO teams (name, city, max_players, owner_id) "
+                            + "VALUES (?, ?, ?, ?) RETURNING id",
                     Long.class,
-                    team.getName(), team.getCity(), team.getMaxPlayers());
+                    team.getName(), team.getCity(), team.getMaxPlayers(), team.getOwnerId());
             team.setId(id);
         } else {
             jdbc.update(
@@ -47,7 +50,7 @@ public class TeamRepository {
 
     public List<Team> findAll() {
         return jdbc.query(
-                "SELECT id, name, city, max_players FROM teams ORDER BY id",
+                "SELECT " + COLUMNS + " FROM teams ORDER BY id",
                 TEAM_MAPPER);
     }
 
@@ -57,13 +60,13 @@ public class TeamRepository {
                 .replace("%", "\\%")
                 .replace("_", "\\_");
         return jdbc.query(
-                "SELECT id, name, city, max_players FROM teams WHERE name ILIKE ? ORDER BY id",
+                "SELECT " + COLUMNS + " FROM teams WHERE name ILIKE ? ORDER BY id",
                 TEAM_MAPPER, "%" + escaped + "%");
     }
 
     public Optional<Team> findById(Long id) {
         return jdbc.query(
-                "SELECT id, name, city, max_players FROM teams WHERE id = ?",
+                "SELECT " + COLUMNS + " FROM teams WHERE id = ?",
                 TEAM_MAPPER, id)
                 .stream()
                 .findFirst();
@@ -71,7 +74,7 @@ public class TeamRepository {
 
     public Optional<Team> findByIdForUpdate(Long id) {
         return jdbc.query(
-                "SELECT id, name, city, max_players FROM teams WHERE id = ? FOR UPDATE",
+                "SELECT " + COLUMNS + " FROM teams WHERE id = ? FOR UPDATE",
                 TEAM_MAPPER, id)
                 .stream()
                 .findFirst();
