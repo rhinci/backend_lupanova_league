@@ -264,3 +264,37 @@ POST {{base}}/api/teams
 Content-Type: application/json
 
 { "name": "Анонимная команда", "city": "Москва", "maxPlayers": 10 }
+
+
+
+
+### Без входа: создать команду, должен быть 401
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Без входа", "city": "Москва", "maxPlayers": 10 }
+
+### Без входа: удалить, должен быть 401
+DELETE {{base}}/api/teams/1
+
+### Без входа: добавить игрока, должен быть 401
+POST {{base}}/api/teams/1/players
+Content-Type: application/json
+
+{ "fullName": "Аноним", "number": 1, "birthDate": "2005-01-01" }
+
+### Без входа: чтение остаётся открытым, должен быть 200
+GET {{base}}/api/teams?limit=2
+
+### Регистрация без входа по-прежнему работает, должен быть 201
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "boris", "password": "qwerty123" }
+
+### С входом: создать команду, должен быть 201
+POST {{base}}/api/teams
+Authorization: Basic anna qwerty123
+Content-Type: application/json
+
+{ "name": "С входом", "city": "Москва", "maxPlayers": 10 }
