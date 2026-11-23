@@ -380,3 +380,30 @@ Content-Type: application/json
 ### anna удаляет свою команду (25), должен быть 204
 DELETE {{base}}/api/teams/25
 Authorization: {{auth}}
+
+
+
+
+### JWT: вход, должен быть 200 и access_token
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "username": "anna", "password": "qwerty123" }
+
+### JWT: неверный пароль, должен быть 401
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "username": "anna", "password": "wrongpass" }
+
+### JWT: нет такого логина, должен быть 401 с тем же текстом
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "username": "nobody", "password": "qwerty123" }
+
+### JWT: пустой пароль, должен быть 400 и field = password
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "username": "anna", "password": "" }

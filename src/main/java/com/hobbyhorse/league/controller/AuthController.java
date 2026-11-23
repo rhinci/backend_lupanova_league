@@ -22,6 +22,10 @@ import com.hobbyhorse.league.security.AuthInterceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.Map;
+
+import com.hobbyhorse.league.dto.LoginRequest;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -37,7 +41,13 @@ public class AuthController {
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
         return UserResponse.from(authService.register(request.username(), request.password()));
     }
-    
+
+    @PostMapping("/login")
+    public Map<String, String> login(@Valid @RequestBody LoginRequest request) {
+        String token = authService.login(request.username(), request.password());
+        return Map.of("access_token", token);
+    }
+
     @GetMapping("/me")
     public UserResponse me(HttpServletRequest request) {
         User user = (User) request.getAttribute(AuthInterceptor.CURRENT_USER);

@@ -1,5 +1,8 @@
 package com.hobbyhorse.league.service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -8,19 +11,21 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.hobbyhorse.league.model.User;
 import com.hobbyhorse.league.repository.UserRepository;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import com.hobbyhorse.league.security.JwtService;
 
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public User register(String username, String password) {
@@ -40,6 +45,10 @@ public class AuthService {
         }
     }
 
+    public String login(String username, String password) {
+        return jwtService.generate(verify(username, password));
+    }
+
     public User authenticate(String header) {
         if (header == null || !header.startsWith("Basic ")) {
             throw unauthorized();
@@ -57,9 +66,10 @@ public class AuthService {
         if (colon < 0) {
             throw unauthorized();
         }
-        String username = decoded.substring(0, colon);
-        String password = decoded.substring(colon + 1);
+        return verify(decoded.substring(0, colon), decoded.substring(colon + 1));
+    }
 
+    private User verify(String username, String password) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(this::unauthorized);
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
@@ -68,11 +78,11 @@ public class AuthService {
         return user;
     }
 
-    private ResponseStatusException unauthorized() {
-        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
-    }
-
     private ResponseStatusException conflict() {
         return new ResponseStatusException(HttpStatus.CONFLICT, "Логин уже занят");
+    }
+
+    private ResponseStatusException unauthorized() {
+        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
     }
 }

@@ -19,7 +19,8 @@ public class AuthInterceptor implements HandlerInterceptor {
     public static final String CURRENT_USER = "currentUser";
 
     private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
-    private static final Set<String> PUBLIC_PATHS = Set.of("/auth/register");
+    private static final Set<String> PUBLIC_PATHS = Set.of("/auth/register", "/auth/login");
+    
 
     private final AuthService authService;
 
