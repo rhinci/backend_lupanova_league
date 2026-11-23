@@ -1,5 +1,6 @@
 
 @base = http://localhost:8000
+@auth = Basic YW5uYTpxd2VydHkxMjM=
 
 ### Сервис жив?
 GET {{base}}/health
@@ -294,7 +295,7 @@ Content-Type: application/json
 
 ### С входом: создать команду, должен быть 201
 POST {{base}}/api/teams
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 Content-Type: application/json
 
 { "name": "С входом", "city": "Москва", "maxPlayers": 10 }
@@ -304,7 +305,7 @@ Content-Type: application/json
 
 ### Кто я: с входом, должен быть 200 и без пароля и хэша
 GET {{base}}/auth/me
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 
 ### Кто я: без входа, должен быть 401
 GET {{base}}/auth/me
@@ -318,14 +319,14 @@ Authorization: Basic anna wrongpass
 
 ### Создать команду, владелец ставится сервером (ownerId = 1)
 POST {{base}}/api/teams
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 Content-Type: application/json
 
 { "name": "Команда с владельцем", "city": "Москва", "maxPlayers": 10 }
 
 ### Попытка подставить чужого владельца: всё равно ownerId = 3 (boris)
 POST {{base}}/api/teams
-Authorization: Basic boris qwerty123
+Authorization: {{auth}}
 Content-Type: application/json
 
 { "name": "Подделка владельца", "city": "Москва", "maxPlayers": 10, "ownerId": 1 }
@@ -335,47 +336,47 @@ Content-Type: application/json
 
 ### anna меняет чужую команду (26), должен быть 403
 PATCH {{base}}/api/teams/26
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 Content-Type: application/json
 
 { "name": "Взлом" }
 
 ### boris удаляет чужую команду (25), должен быть 403
 DELETE {{base}}/api/teams/25
-Authorization: Basic boris qwerty123
+Authorization: {{auth}}
 
 ### anna добавляет игрока в чужую команду (26), должен быть 403
 POST {{base}}/api/teams/26/players
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 Content-Type: application/json
 
 { "fullName": "Чужак", "number": 1, "birthDate": "2005-01-01" }
 
 ### Команда без владельца (24), обычному пользователю нельзя: 403
 PATCH {{base}}/api/teams/24
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 Content-Type: application/json
 
 { "name": "Взлом" }
 
 ### Несуществующая команда, должен быть 404, а не 403
 DELETE {{base}}/api/teams/999999
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 
 ### anna меняет свою команду (25), должен быть 200
 PATCH {{base}}/api/teams/25
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 Content-Type: application/json
 
 { "name": "Моя команда" }
 
 ### anna добавляет игрока в свою команду (25), должен быть 201
 POST {{base}}/api/teams/25/players
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}
 Content-Type: application/json
 
 { "fullName": "Свой Игрок", "number": 1, "birthDate": "2005-01-01" }
 
 ### anna удаляет свою команду (25), должен быть 204
 DELETE {{base}}/api/teams/25
-Authorization: Basic anna qwerty123
+Authorization: {{auth}}

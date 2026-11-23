@@ -42,5 +42,13 @@
     },
     "expect_status": 409
   },
-  "stats_path": "/api/teams/stats"
+  "stats_path": "/api/teams/stats",
+  "auth": {
+    "scheme": "basic",
+    "register_path": "/auth/register",
+    "me_path": "/auth/me",
+    "login_field": "username",
+    "password_field": "password",
+    "owner_field": "ownerId"
+  }
 }
