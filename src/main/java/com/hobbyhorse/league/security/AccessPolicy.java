@@ -17,6 +17,9 @@ public class AccessPolicy {
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Требуется вход");
         }
+        if ("admin".equals(user.getRole())) {
+            return;
+        }
         if (team.getOwnerId() == null || !team.getOwnerId().equals(user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нельзя изменять чужую запись");
         }

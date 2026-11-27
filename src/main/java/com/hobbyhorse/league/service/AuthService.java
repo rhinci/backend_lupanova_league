@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.hobbyhorse.league.model.User;
 import com.hobbyhorse.league.repository.UserRepository;
 import com.hobbyhorse.league.security.JwtService;
+import com.hobbyhorse.league.security.LoginRateLimiter;
 
 import io.jsonwebtoken.JwtException;
 
@@ -21,13 +22,16 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final LoginRateLimiter loginRateLimiter;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtService jwtService) {
+                       JwtService jwtService,
+                       LoginRateLimiter loginRateLimiter) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.loginRateLimiter = loginRateLimiter;
     }
 
     public User register(String username, String password) {
@@ -90,11 +94,15 @@ public class AuthService {
     }
 
     private User verify(String username, String password) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(this::unauthorized);
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        loginRateLimiter.checkAllowed(username);
+
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            loginRateLimiter.recordFailure(username);
             throw unauthorized();
         }
+
+        loginRateLimiter.reset(username);
         return user;
     }
 

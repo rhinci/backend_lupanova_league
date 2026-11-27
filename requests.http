@@ -440,3 +440,41 @@ Authorization: Bearer abc.def.ghi
 ### Bearer: пустой токен, должен быть 401
 GET {{base}}/auth/me
 Authorization: Bearer
+
+### Подделанная подпись, должен быть 401
+GET {{base}}/auth/me
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhbm5hIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTU3NTcyOTYsImV4cCI6MTc5NTc2MDg5Nn0.8yfeFjKlIyooVvLEq5PFwtJE-ykglj3xCZSgHQL_xVywACSxPwXwSJhQfvvFt71-rzH05sDIZ9xO4m2cHYw8VA
+
+
+
+
+### Админ: меняет чужую команду (26, владелец boris), должен быть 200
+PATCH {{base}}/api/teams/26
+Authorization: Basic admin admin-test-pass
+Content-Type: application/json
+
+{ "name": "Исправлено админом" }
+
+### Админ: меняет команду без владельца (24), должен быть 200
+PATCH {{base}}/api/teams/24
+Authorization: Basic admin admin-test-pass
+Content-Type: application/json
+
+{ "name": "Тоже исправлено админом" }
+
+### Обычный пользователь по-прежнему не может, должен быть 403
+PATCH {{base}}/api/teams/26
+Authorization: Basic anna qwerty123
+Content-Type: application/json
+
+{ "name": "Взлом" }
+
+### Стать админом через регистрацию нельзя: логин занят, должен быть 409
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "admin", "password": "qwerty123", "role": "admin" }
+
+### Кто я под админом, должен быть 200 и role = admin
+GET {{base}}/auth/me
+Authorization: Basic admin admin-test-pass

@@ -42,4 +42,12 @@ public class UserRepository {
                 .stream()
                 .findFirst();
     }
+
+    public void saveAdmin(String username, String passwordHash) {
+        jdbc.update(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin') "
+                        + "ON CONFLICT (username) DO UPDATE "
+                        + "SET password_hash = EXCLUDED.password_hash, role = 'admin'",
+                username, passwordHash);
+    }
 }

@@ -46,9 +46,12 @@
   "auth": {
     "scheme": "basic",
     "register_path": "/auth/register",
+    "login_path": "/auth/login",
     "me_path": "/auth/me",
     "login_field": "username",
     "password_field": "password",
-    "owner_field": "ownerId"
+    "token_field": "access_token",
+    "owner_field": "ownerId",
+    "admin": { "username": "admin", "password": "admin-test-pass" }
   }
 }
