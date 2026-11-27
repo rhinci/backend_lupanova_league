@@ -19,11 +19,15 @@ import com.hobbyhorse.league.model.Team;
 import com.hobbyhorse.league.model.TeamStats;
 import com.hobbyhorse.league.repository.TeamRepository;
 import com.hobbyhorse.league.error.BadRequestException;
+import com.hobbyhorse.league.model.User;
+import com.hobbyhorse.league.security.AuthInterceptor;
+import com.hobbyhorse.league.security.AccessPolicy;
 
 import jakarta.validation.Valid;
 import java.util.Set;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/teams")
@@ -31,16 +35,21 @@ public class TeamController {
 
     private final TeamRepository teamRepository;
     private final Validator validator;
+    private final AccessPolicy accessPolicy;
 
-    public TeamController(TeamRepository teamRepository, Validator validator) {
+    public TeamController(TeamRepository teamRepository, Validator validator,
+                          AccessPolicy accessPolicy) {
         this.teamRepository = teamRepository;
         this.validator = validator;
+        this.accessPolicy = accessPolicy;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Team create(@Valid @RequestBody Team team) {
+    public Team create(@Valid @RequestBody Team team, HttpServletRequest request) {
+        User user = (User) request.getAttribute(AuthInterceptor.CURRENT_USER);
         team.setId(null);
+        team.setOwnerId(user.getId());
         return teamRepository.save(team);
     }
 
@@ -78,11 +87,14 @@ public class TeamController {
     }
 
     @PatchMapping("/{id}")
-    public Team update(@PathVariable Long id, @RequestBody Team changes) {
+    public Team update(@PathVariable Long id, @RequestBody Team changes,
+                       HttpServletRequest request) {
         Team current = findOrThrow(id);
+        accessPolicy.checkCanModify(request, current);
 
         Team updated = new Team();
         updated.setId(current.getId());
+        updated.setOwnerId(current.getOwnerId());
         updated.setName(changes.getName() != null ? changes.getName() : current.getName());
         updated.setCity(changes.getCity() != null ? changes.getCity() : current.getCity());
         updated.setMaxPlayers(changes.getMaxPlayers() != null
@@ -99,8 +111,9 @@ public class TeamController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        findOrThrow(id);
+    public void delete(@PathVariable Long id, HttpServletRequest request) {
+        Team current = findOrThrow(id);
+        accessPolicy.checkCanModify(request, current);
         teamRepository.deleteById(id);
     }
 

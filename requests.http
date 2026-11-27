@@ -1,5 +1,6 @@
 
 @base = http://localhost:8000
+@auth = Basic YW5uYTpxd2VydHkxMjM=
 
 ### Сервис жив?
 GET {{base}}/health
@@ -115,7 +116,7 @@ Content-Type: application/json
 
 ### Игроки
 
-@teamId = 2
+@teamId = 18
 
 ### Добавить игрока в команду
 POST {{base}}/api/teams/{{teamId}}/players
@@ -159,7 +160,7 @@ GET {{base}}/api/teams?q=БЫСТРЫЕ
 GET {{base}}/api/teams?q=команда&city=Москва&limit=3
 
 ### Символ % ищется как обычный символ, должен вернуться пустой список
-GET {{base}}/api/teams?q=%25
+GET {{base}}/api/teams?q=%18
 
 ### Попытка инъекции в поиске, должен вернуться пустой список
 GET {{base}}/api/teams?q=' OR 1=1 --
@@ -182,7 +183,7 @@ Content-Type: application/json
 { "name": "Маленькая команда", "city": "Сочи", "maxPlayers": 2 }
 
 ### Подставить id из прошлого ответа
-@smallTeamId = 1
+@smallTeamId = 18
 
 ### Игрок 1
 POST {{base}}/api/teams/{{smallTeamId}}/players
@@ -206,3 +207,274 @@ Content-Type: application/json
 
 ### Статистика: средний возраст игроков по командам
 GET {{base}}/api/teams/stats
+
+
+
+
+
+### Лаба 3: регистрация
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "anna", "password": "qwerty123" }
+
+### Повтор того же логина, должен быть 409
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "anna", "password": "другой-пароль" }
+
+### Слишком короткий пароль, должен быть 400 и field = password
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "boris", "password": "123" }
+
+### Попытка выдать себя за админа: поле role игнорируется
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "hacker", "password": "qwerty123", "role": "admin" }
+
+
+
+
+### Basic: верный пароль, должен быть 201 (команда создаётся)
+POST {{base}}/api/teams
+Authorization: Basic anna qwerty123
+Content-Type: application/json
+
+{ "name": "Команда Анны", "city": "Москва", "maxPlayers": 10 }
+
+### Basic: неверный пароль, должен быть 401
+POST {{base}}/api/teams
+Authorization: Basic anna wrongpass
+Content-Type: application/json
+
+{ "name": "Команда Анны", "city": "Москва", "maxPlayers": 10 }
+
+### Basic: логина нет, должен быть 401 с тем же текстом
+POST {{base}}/api/teams
+Authorization: Basic nobody qwerty123
+Content-Type: application/json
+
+{ "name": "Команда Анны", "city": "Москва", "maxPlayers": 10 }
+
+### Без заголовка пока 201
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Анонимная команда", "city": "Москва", "maxPlayers": 10 }
+
+
+
+
+### Без входа: создать команду, должен быть 401
+POST {{base}}/api/teams
+Content-Type: application/json
+
+{ "name": "Без входа", "city": "Москва", "maxPlayers": 10 }
+
+### Без входа: удалить, должен быть 401
+DELETE {{base}}/api/teams/1
+
+### Без входа: добавить игрока, должен быть 401
+POST {{base}}/api/teams/1/players
+Content-Type: application/json
+
+{ "fullName": "Аноним", "number": 1, "birthDate": "2005-01-01" }
+
+### Без входа: чтение остаётся открытым, должен быть 200
+GET {{base}}/api/teams?limit=2
+
+### Регистрация без входа по-прежнему работает, должен быть 201
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "boris", "password": "qwerty123" }
+
+### С входом: создать команду, должен быть 201
+POST {{base}}/api/teams
+Authorization: {{auth}}
+Content-Type: application/json
+
+{ "name": "С входом", "city": "Москва", "maxPlayers": 10 }
+
+
+
+
+### Кто я: с входом, должен быть 200 и без пароля и хэша
+GET {{base}}/auth/me
+Authorization: {{auth}}
+
+### Кто я: без входа, должен быть 401
+GET {{base}}/auth/me
+
+### Кто я: неверный пароль, должен быть 401
+GET {{base}}/auth/me
+Authorization: Basic anna wrongpass
+
+
+
+
+### Создать команду, владелец ставится сервером (ownerId = 1)
+POST {{base}}/api/teams
+Authorization: {{auth}}
+Content-Type: application/json
+
+{ "name": "Команда с владельцем", "city": "Москва", "maxPlayers": 10 }
+
+### Попытка подставить чужого владельца: всё равно ownerId = 3 (boris)
+POST {{base}}/api/teams
+Authorization: {{auth}}
+Content-Type: application/json
+
+{ "name": "Подделка владельца", "city": "Москва", "maxPlayers": 10, "ownerId": 1 }
+
+
+
+
+### anna меняет чужую команду (26), должен быть 403
+PATCH {{base}}/api/teams/26
+Authorization: {{auth}}
+Content-Type: application/json
+
+{ "name": "Взлом" }
+
+### boris удаляет чужую команду (25), должен быть 403
+DELETE {{base}}/api/teams/25
+Authorization: {{auth}}
+
+### anna добавляет игрока в чужую команду (26), должен быть 403
+POST {{base}}/api/teams/26/players
+Authorization: {{auth}}
+Content-Type: application/json
+
+{ "fullName": "Чужак", "number": 1, "birthDate": "2005-01-01" }
+
+### Команда без владельца (24), обычному пользователю нельзя: 403
+PATCH {{base}}/api/teams/24
+Authorization: {{auth}}
+Content-Type: application/json
+
+{ "name": "Взлом" }
+
+### Несуществующая команда, должен быть 404, а не 403
+DELETE {{base}}/api/teams/999999
+Authorization: {{auth}}
+
+### anna меняет свою команду (25), должен быть 200
+PATCH {{base}}/api/teams/25
+Authorization: {{auth}}
+Content-Type: application/json
+
+{ "name": "Моя команда" }
+
+### anna добавляет игрока в свою команду (25), должен быть 201
+POST {{base}}/api/teams/25/players
+Authorization: {{auth}}
+Content-Type: application/json
+
+{ "fullName": "Свой Игрок", "number": 1, "birthDate": "2005-01-01" }
+
+### anna удаляет свою команду (25), должен быть 204
+DELETE {{base}}/api/teams/25
+Authorization: {{auth}}
+
+
+
+
+### JWT: вход, должен быть 200 и access_token
+# @name login
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "username": "anna", "password": "qwerty123" }
+
+### JWT: неверный пароль, должен быть 401
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "username": "anna", "password": "wrongpass" }
+
+### JWT: нет такого логина, должен быть 401 с тем же текстом
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "username": "nobody", "password": "qwerty123" }
+
+### JWT: пустой пароль, должен быть 400 и field = password
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "username": "anna", "password": "" }
+
+
+
+
+### Токен из последнего входа (сначала выполни запрос входа выше)
+@token = {{login.response.body.access_token}}
+
+### Bearer: кто я, должен быть 200 и anna
+GET {{base}}/auth/me
+Authorization: Bearer {{token}}
+
+### Bearer: создать команду, должен быть 201 и ownerId = 1
+POST {{base}}/api/teams
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "name": "Команда по токену", "city": "Москва", "maxPlayers": 10 }
+
+### Bearer: чужая команда (26 принадлежит boris), должен быть 403
+PATCH {{base}}/api/teams/26
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "name": "Взлом" }
+
+### Bearer: мусор вместо токена, должен быть 401
+GET {{base}}/auth/me
+Authorization: Bearer abc.def.ghi
+
+### Bearer: пустой токен, должен быть 401
+GET {{base}}/auth/me
+Authorization: Bearer
+
+### Подделанная подпись, должен быть 401
+GET {{base}}/auth/me
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhbm5hIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTU3NTcyOTYsImV4cCI6MTc5NTc2MDg5Nn0.8yfeFjKlIyooVvLEq5PFwtJE-ykglj3xCZSgHQL_xVywACSxPwXwSJhQfvvFt71-rzH05sDIZ9xO4m2cHYw8VA
+
+
+
+
+### Админ: меняет чужую команду (26, владелец boris), должен быть 200
+PATCH {{base}}/api/teams/26
+Authorization: Basic admin admin-test-pass
+Content-Type: application/json
+
+{ "name": "Исправлено админом" }
+
+### Админ: меняет команду без владельца (24), должен быть 200
+PATCH {{base}}/api/teams/24
+Authorization: Basic admin admin-test-pass
+Content-Type: application/json
+
+{ "name": "Тоже исправлено админом" }
+
+### Обычный пользователь по-прежнему не может, должен быть 403
+PATCH {{base}}/api/teams/26
+Authorization: Basic anna qwerty123
+Content-Type: application/json
+
+{ "name": "Взлом" }
+
+### Стать админом через регистрацию нельзя: логин занят, должен быть 409
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "username": "admin", "password": "qwerty123", "role": "admin" }
+
+### Кто я под админом, должен быть 200 и role = admin
+GET {{base}}/auth/me
+Authorization: Basic admin admin-test-pass
