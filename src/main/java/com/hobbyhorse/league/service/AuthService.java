@@ -13,6 +13,8 @@ import com.hobbyhorse.league.model.User;
 import com.hobbyhorse.league.repository.UserRepository;
 import com.hobbyhorse.league.security.JwtService;
 
+import io.jsonwebtoken.JwtException;
+
 @Service
 public class AuthService {
 
@@ -50,6 +52,24 @@ public class AuthService {
     }
 
     public User authenticate(String header) {
+        if (header != null && header.startsWith("Bearer ")) {
+            return authenticateBearer(header.substring(7).trim());
+        }
+        return authenticateBasic(header);
+    }
+
+    private User authenticateBearer(String token) {
+        String username;
+        try {
+            username = jwtService.parseUsername(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw invalidToken();
+        }
+        return userRepository.findByUsername(username)
+                .orElseThrow(this::invalidToken);
+    }
+
+    private User authenticateBasic(String header) {
         if (header == null || !header.startsWith("Basic ")) {
             throw unauthorized();
         }
@@ -84,5 +104,9 @@ public class AuthService {
 
     private ResponseStatusException unauthorized() {
         return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
+    }
+
+    private ResponseStatusException invalidToken() {
+        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Недействительный или просроченный токен");
     }
 }

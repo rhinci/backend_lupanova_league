@@ -385,6 +385,7 @@ Authorization: {{auth}}
 
 
 ### JWT: вход, должен быть 200 и access_token
+# @name login
 POST {{base}}/auth/login
 Content-Type: application/json
 
@@ -407,3 +408,35 @@ POST {{base}}/auth/login
 Content-Type: application/json
 
 { "username": "anna", "password": "" }
+
+
+
+
+### Токен из последнего входа (сначала выполни запрос входа выше)
+@token = {{login.response.body.access_token}}
+
+### Bearer: кто я, должен быть 200 и anna
+GET {{base}}/auth/me
+Authorization: Bearer {{token}}
+
+### Bearer: создать команду, должен быть 201 и ownerId = 1
+POST {{base}}/api/teams
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "name": "Команда по токену", "city": "Москва", "maxPlayers": 10 }
+
+### Bearer: чужая команда (26 принадлежит boris), должен быть 403
+PATCH {{base}}/api/teams/26
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "name": "Взлом" }
+
+### Bearer: мусор вместо токена, должен быть 401
+GET {{base}}/auth/me
+Authorization: Bearer abc.def.ghi
+
+### Bearer: пустой токен, должен быть 401
+GET {{base}}/auth/me
+Authorization: Bearer
