@@ -8,7 +8,7 @@
 | Главная сущность | Команда |
 | Связанная сущность (1:N) | Игрок |
 | Фишка | Правила лиги: в составе не больше N игроков, номера не повторяются |
-| Стек | java 25, Spring Boot 4.1.1, PostgreSQL |
+| Стек | java 25, Spring Boot 4.1.1, PostgreSQL, bcrypt, JWT |
 
 ## Как запустить
 
@@ -32,6 +32,10 @@ cp .env.example .env
 ```
 
 В PowerShell вместо `cp` можно использовать `Copy-Item .env.example .env`. Для базы из команды выше нужно заменить в `.env` значение `DB_PASSWORD=change_me` на `DB_PASSWORD=league_pass`.
+В `.env` также задаются `JWT_SECRET` (случайная строка от 32 символов, сгенерировать можно командой
+`[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))` в PowerShell),
+`JWT_TTL_MINUTES` (время жизни токена в минутах) и `ADMIN_USERNAME` / `ADMIN_PASSWORD`
+(администратор создаётся при старте сервиса).
 
 3. Запустить сервис:
 
@@ -62,6 +66,20 @@ cp .env.example .env
 | POST | `/api/teams/{id}/players` |	Добавить игрока в команду	| 201; 400; 404; 409 |
 | GET |	`/api/teams/{id}/players` |	Список игроков команды | 200; 404 |
 | GET | `/api/teams/stats` | Статистика: число игроков и средний возраст по командам | 200 |
+| POST | `/auth/register` | Регистрация | 201; 400; 409 |
+| POST | `/auth/login` | Вход, выдаёт `access_token` (JWT) | 200; 400; 401; 429 |
+| GET | `/auth/me` | Текущий пользователь | 200; 401 |
+
+## Пользователи и доступ
+
+- Читать данные (`GET`) может кто угодно. Изменять (`POST`, `PATCH`, `DELETE`) может только вошедший.
+- Вход двумя способами: `Authorization: Basic <логин:пароль в Base64>` или
+  `Authorization: Bearer <JWT>` (токен выдаёт `POST /auth/login`).
+- Пароли хранятся хэшем bcrypt. Секрет и срок жизни JWT берутся из `.env`.
+- Автора записи (`ownerId`) ставит сервер. Чужую команду, а также игроков в ней, изменить и удалить нельзя: 403.
+- Роль `admin` может менять и удалять любые записи. Админ создаётся при старте из `ADMIN_USERNAME` / `ADMIN_PASSWORD`,
+  через регистрацию стать админом нельзя.
+- После 5 неудачных попыток входа за минуту сервер отвечает 429 (счётчик в памяти сервиса).
 
 ## Фильтр и пагинация
 
@@ -110,12 +128,20 @@ Execution Time: 0.125 ms
 
 ```mermaid
 erDiagram
+    users ||--o{ teams : "создаёт"
     teams ||--o{ players : "состоит из"
+    users {
+        bigint id PK
+        varchar username
+        varchar password_hash
+        varchar role
+    }
     teams {
         bigint id PK
         varchar name
         varchar city
         int max_players
+        bigint owner_id FK
     }
     players {
         bigint id PK
